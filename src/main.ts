@@ -46,7 +46,7 @@ console.log(cell === sameCell);
 const anotherlatlng = leaflet.latLng(36.9994, -122.0532);
 const anotherCell = gridCellFactory.getCell(
   anotherlatlng.lat,
-  anotherlatlng.lng
+  anotherlatlng.lng,
 );
 console.log(anotherCell);
 
@@ -119,7 +119,7 @@ function spawnCache(i: number, j: number) {
   rect.bindPopup(() => {
     // Each cache has a random point value, mutable by the player
     let cacheCoins = Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
-    const cacheSerials: { i: number, j: number, serial: number }[] = [];
+    const cacheSerials: { i: number; j: number; serial: number }[] = [];
 
     for (let k = 0; k < cacheCoins; k++) {
       cacheSerials.push({ i, j, serial: cacheSerial++ });
