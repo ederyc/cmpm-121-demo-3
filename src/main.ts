@@ -113,7 +113,11 @@ function spawnCache(i: number, j: number) {
 
   // function to update the player's coins on the status panel (used in popupDiv)
   function updateStatusPanel() {
-    statusPanel.innerHTML = `Player Coins: ${playerCoins} | Collected Coin IDs: ${collectedCoinsSerials.join(", ")}`;
+
+    statusPanel.innerHTML =
+    `Player Coins: ${playerCoins} | Collected Coin IDs: ${
+    collectedCoinsSerials.join(", ")
+}`;
   }
 
   // Handle interactions with the cache
