@@ -94,7 +94,6 @@ statusPanel.innerHTML = "No coins 😔";
 
 // assign serial numbers to coins
 let cacheSerial = 0;
-let collectedCoinsSerials: number[] = [];
 
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
@@ -113,10 +112,7 @@ function spawnCache(i: number, j: number) {
 
   // function to update the player's coins on the status panel (used in popupDiv)
   function updateStatusPanel() {
-    statusPanel.innerHTML = 
-    `Player Coins: ${playerCoins} | Collected Coin IDs: ${
-      collectedCoinsSerials.join(", ")
-    }`;
+    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
   }
 
   // Handle interactions with the cache
@@ -145,11 +141,6 @@ function spawnCache(i: number, j: number) {
         if (cacheCoins > 0) {
           cacheCoins--;
           playerCoins++;
-
-          const collectedCoin = cacheSerials.pop();
-          if (collectedCoin) {
-            collectedCoinsSerials.push(collectedCoin.serial);
-          }
           popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
             cacheCoins.toString();
           updateStatusPanel();
