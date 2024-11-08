@@ -11,6 +11,42 @@ import "./leafletWorkaround.ts";
 // Deterministic random number generator
 import luck from "./luck.ts";
 
+interface Cell {
+  readonly i: number;
+  readonly j: number;
+}
+
+class GridCell {
+  private cells: Map<string, Cell> = new Map();
+
+  getCell(lat: number, lng: number): Cell {
+    const i = Math.floor(lat * 10000);
+    const j = Math.floor(lng * 10000);
+
+    const key = `${i}:${j}`;
+
+    if (!this.cells.has(key)) {
+      this.cells.set(key, { i, j });
+    }
+
+    return this.cells.get(key)!;
+  }
+}
+
+const gridCellFactory = new GridCell();
+
+const latLng = leaflet.latLng(36.9995, -122.0533);
+
+const cell = gridCellFactory.getCell(latLng.lat, latLng.lng);
+console.log(cell);
+
+const sameCell = gridCellFactory.getCell(latLng.lat, latLng.lng);
+console.log(cell === sameCell);
+
+const anotherlatlng = leaflet.latLng(36.9994, -122.0532);
+const anotherCell = gridCellFactory.getCell (anotherlatlng.lat, anotherlatlng.lng);
+console.log(anotherCell);
+
 const title = document.createElement("h1");
 title.textContent = "Eder's GeoCoins";
 document.body.appendChild(title);
