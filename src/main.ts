@@ -51,7 +51,7 @@ const anotherCell = gridCellFactory.getCell(
 console.log(anotherCell);
 
 const title = document.createElement("h1");
-title.textContent = "Eder's GeoCoins";
+title.textContent = "Collect Coins!";
 document.body.appendChild(title);
 
 // Location of the classroom
