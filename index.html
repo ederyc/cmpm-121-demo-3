@@ -1,13 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  </head>
-  <body>
+    <title>Geocoin Management Game</title>
+    <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
     <div id="app">
-      <!-- todo -->
+        <div id="controlPanel">
+            <button id="sensor" title="sensor">🌐</button>
+            <button id="north" title="north">⬆️</button>
+            <button id="south" title="south">⬇️</button>
+            <button id="west" title="west">⬅️</button>
+            <button id="east" title="east">➡️</button>
+            <button id="reset" title="reset">🚮</button>
+        </div>
+        <div id="statusPanel"></div>
+        <div id="map"></div> <!-- Map container -->
     </div>
-    <script type="module" src="/src/main.ts"></script>
-  </body>
+    <script type="module" src="/src/main.ts"></script> <!-- Path to your main.ts -->
+</body>
 </html>
