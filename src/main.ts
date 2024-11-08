@@ -11,6 +11,10 @@ import "./leafletWorkaround.ts";
 // Deterministic random number generator
 import luck from "./luck.ts";
 
+const title = document.createElement("h1");
+title.textContent = "Eder's GeoCoins";
+document.body.appendChild(title);
+
 // Location of the classroom
 const OAKES_CLASSROOM = leaflet.latLng(36.98949379578401, -122.06277128548504);
 
