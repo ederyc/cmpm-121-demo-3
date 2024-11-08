@@ -60,6 +60,24 @@ button {
   transition: border-color 0.25s;
 }
 
+.button-collect {
+  background-color: green;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.button-deposit {
+  background-color: red;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 button:hover {
   border-color: #646cff;
 }

@@ -44,10 +44,10 @@ const playerMarker = leaflet.marker(OAKES_CLASSROOM);
 playerMarker.bindTooltip("This is You!!");
 playerMarker.addTo(map);
 
-// Display the player's points
-let playerPoints = 0;
+// Display the player's coins
+let playerCoins = 0;
 const statusPanel = document.querySelector<HTMLDivElement>("#statusPanel")!;
-statusPanel.innerHTML = "No points 😔";
+statusPanel.innerHTML = "No coins 😔";
 
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
@@ -62,26 +62,50 @@ function spawnCache(i: number, j: number) {
   const rect = leaflet.rectangle(bounds);
   rect.addTo(map);
 
+  // function to update the player's coins on the status panel (used in popupDiv)
+  function updateStatusPanel() {
+    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
+  }
+
   // Handle interactions with the cache
   rect.bindPopup(() => {
     // Each cache has a random point value, mutable by the player
-    let pointValue = Math.floor(luck([i, j, "initialValue"].toString()) * 100);
+    let cacheCoins = Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
 
     // The popup offers a description and button
     const popupDiv = document.createElement("div");
     popupDiv.innerHTML = `
-                <div>There is a cache here at "${i},${j}". It has value <span id="value">${pointValue}</span>.</div>
-                <button id="poke">poke</button>`;
+      <div>Cache at "${i},${j}" - Coins: <span id="cacheCoins">${cacheCoins}</span></div>
+      <button id="collect" class="button-collect">Collect</button>
+      <button id="deposit" class="button-deposit" ${
+      playerCoins > 0 ? "" : "disabled"
+    }>Deposit</button>`;
 
     // Clicking the button decrements the cache's value and increments the player's points
     popupDiv
-      .querySelector<HTMLButtonElement>("#poke")!
+      .querySelector<HTMLButtonElement>("#collect")!
       .addEventListener("click", () => {
-        pointValue--;
-        popupDiv.querySelector<HTMLSpanElement>("#value")!.innerHTML =
-          pointValue.toString();
-        playerPoints++;
-        statusPanel.innerHTML = `${playerPoints} points accumulated`;
+        if (cacheCoins > 0) {
+          cacheCoins--;
+          playerCoins++;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          updateStatusPanel();
+        }
+      });
+
+    popupDiv
+      .querySelector<HTMLButtonElement>("#deposit")!
+      .addEventListener("click", () => {
+        if (playerCoins > 0) {
+          cacheCoins++;
+          playerCoins--;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          updateStatusPanel();
+          popupDiv.querySelector<HTMLButtonElement>("#deposit")!.disabled =
+            playerCoins === 0;
+        }
       });
 
     return popupDiv;
