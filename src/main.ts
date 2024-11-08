@@ -59,7 +59,9 @@ function spawnCache(i: number, j: number) {
   ]);
 
   // Add a rectangle to the map to represent the cache
-  const rect = leaflet.rectangle(bounds);
+  const rect = leaflet.rectangle(bounds, {
+    className: "cool-cache-box",
+  });
   rect.addTo(map);
 
   // function to update the player's coins on the status panel (used in popupDiv)
