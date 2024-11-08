@@ -44,7 +44,10 @@ const sameCell = gridCellFactory.getCell(latLng.lat, latLng.lng);
 console.log(cell === sameCell);
 
 const anotherlatlng = leaflet.latLng(36.9994, -122.0532);
-const anotherCell = gridCellFactory.getCell (anotherlatlng.lat, anotherlatlng.lng);
+const anotherCell = gridCellFactory.getCell(
+  anotherlatlng.lat,
+  anotherlatlng.lng
+);
 console.log(anotherCell);
 
 const title = document.createElement("h1");
@@ -89,6 +92,9 @@ let playerCoins = 0;
 const statusPanel = document.querySelector<HTMLDivElement>("#statusPanel")!;
 statusPanel.innerHTML = "No coins 😔";
 
+// assign serial numbers to coins
+let cacheSerial = 0;
+
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
@@ -113,6 +119,11 @@ function spawnCache(i: number, j: number) {
   rect.bindPopup(() => {
     // Each cache has a random point value, mutable by the player
     let cacheCoins = Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
+    const cacheSerials: { i: number, j: number, serial: number }[] = [];
+
+    for (let k = 0; k < cacheCoins; k++) {
+      cacheSerials.push({ i, j, serial: cacheSerial++ });
+    }
 
     // The popup offers a description and button
     const popupDiv = document.createElement("div");
