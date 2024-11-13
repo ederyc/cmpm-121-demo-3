@@ -62,6 +62,7 @@ const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
 const NEIGHBORHOOD_SIZE = 8;
 const CACHE_SPAWN_PROBABILITY = 0.1;
+const MOVEMENT_DISTANCE = 0.0001;
 
 // Create the map
 const map = leaflet.map(document.getElementById("map")!, {
@@ -174,3 +175,26 @@ for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
     }
   }
 }
+
+// Functioning directional buttons
+document.getElementById("north")?.addEventListener("click", () => movePlayer(0, MOVEMENT_DISTANCE));
+document.getElementById("south")?.addEventListener("click", () => movePlayer(0, -MOVEMENT_DISTANCE));
+document.getElementById("east")?.addEventListener("click", () => movePlayer(MOVEMENT_DISTANCE, 0));
+document.getElementById("west")?.addEventListener("click", () => movePlayer(-MOVEMENT_DISTANCE, 0));
+
+// Function to update player position
+function movePlayer(deltaLng: number, deltaLat: number) {
+    const currentLatLng = playerMarker.getLatLng();
+    const newLatLng = leaflet.latLng(
+        currentLatLng.lat + deltaLat,
+        currentLatLng.lng + deltaLng
+    );
+
+    // Update player marker location
+    playerMarker.setLatLng(newLatLng);
+    
+    // Center map on the new player location
+    map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
+}
+
+
