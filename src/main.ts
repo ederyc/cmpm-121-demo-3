@@ -196,17 +196,15 @@ document.getElementById("west")?.addEventListener(
 
 // Function to update player position
 function movePlayer(deltaLng: number, deltaLat: number) {
-    const currentLatLng = playerMarker.getLatLng();
-    const newLatLng = leaflet.latLng(
-        currentLatLng.lat + deltaLat,
-        currentLatLng.lng + deltaLng
-    );
+  const currentLatLng = playerMarker.getLatLng();
+  const newLatLng = leaflet.latLng(
+    currentLatLng.lat + deltaLat,
+    currentLatLng.lng + deltaLng,
+  );
 
-    // Update player marker location
-    playerMarker.setLatLng(newLatLng);
-    
-    // Center map on the new player location
-    map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
+  // Update player marker location
+  playerMarker.setLatLng(newLatLng);
+
+  // Center map on the new player location
+  map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
 }
-
-
