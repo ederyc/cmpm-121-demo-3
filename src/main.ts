@@ -177,10 +177,22 @@ for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
 }
 
 // Functioning directional buttons
-document.getElementById("north")?.addEventListener("click", () => movePlayer(0, MOVEMENT_DISTANCE));
-document.getElementById("south")?.addEventListener("click", () => movePlayer(0, -MOVEMENT_DISTANCE));
-document.getElementById("east")?.addEventListener("click", () => movePlayer(MOVEMENT_DISTANCE, 0));
-document.getElementById("west")?.addEventListener("click", () => movePlayer(-MOVEMENT_DISTANCE, 0));
+document.getElementById("north")?.addEventListener(
+  "click",
+  () => movePlayer(0, MOVEMENT_DISTANCE),
+);
+document.getElementById("south")?.addEventListener(
+  "click",
+  () => movePlayer(0, -MOVEMENT_DISTANCE),
+);
+document.getElementById("east")?.addEventListener(
+  "click",
+  () => movePlayer(MOVEMENT_DISTANCE, 0),
+);
+document.getElementById("west")?.addEventListener(
+  "click",
+  () => movePlayer(-MOVEMENT_DISTANCE, 0),
+);
 
 // Function to update player position
 function movePlayer(deltaLng: number, deltaLat: number) {
