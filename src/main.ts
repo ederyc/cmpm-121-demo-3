@@ -96,86 +96,6 @@ statusPanel.innerHTML = "No coins 😔";
 // assign serial numbers to coins
 let cacheSerial = 0;
 
-// Add caches to the map by cell numbers
-function spawnCache(i: number, j: number) {
-  // Convert cell numbers into lat/lng bounds
-  const origin = OAKES_CLASSROOM;
-  const bounds = leaflet.latLngBounds([
-    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
-    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
-  ]);
-
-  // Add a rectangle to the map to represent the cache
-  const rect = leaflet.rectangle(bounds, {
-    className: "cool-cache-box",
-  });
-  rect.addTo(map);
-
-  // function to update the player's coins on the status panel (used in popupDiv)
-  function updateStatusPanel() {
-    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
-  }
-
-  // Handle interactions with the cache
-  rect.bindPopup(() => {
-    // Each cache has a random point value, mutable by the player
-    let cacheCoins = Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
-    const cacheSerials: { i: number; j: number; serial: number }[] = [];
-
-    for (let k = 0; k < cacheCoins; k++) {
-      cacheSerials.push({ i, j, serial: cacheSerial++ });
-    }
-
-    // The popup offers a description and button
-    const popupDiv = document.createElement("div");
-    popupDiv.innerHTML = `
-      <div>Cache at "${i},${j}" - Coins: <span id="cacheCoins">${cacheCoins}</span></div>
-      <button id="collect" class="button-collect">Collect</button>
-      <button id="deposit" class="button-deposit" ${
-      playerCoins > 0 ? "" : "disabled"
-    }>Deposit</button>`;
-
-    // Clicking the button decrements the cache's value and increments the player's points
-    popupDiv
-      .querySelector<HTMLButtonElement>("#collect")!
-      .addEventListener("click", () => {
-        if (cacheCoins > 0) {
-          cacheCoins--;
-          playerCoins++;
-          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
-            cacheCoins.toString();
-          updateStatusPanel();
-        }
-      });
-
-    popupDiv
-      .querySelector<HTMLButtonElement>("#deposit")!
-      .addEventListener("click", () => {
-        if (playerCoins > 0) {
-          cacheCoins++;
-          playerCoins--;
-          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
-            cacheCoins.toString();
-          updateStatusPanel();
-          popupDiv.querySelector<HTMLButtonElement>("#deposit")!.disabled =
-            playerCoins === 0;
-        }
-      });
-
-    return popupDiv;
-  });
-}
-
-// Look around the player's neighborhood for caches to spawn
-for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
-  for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
-    // If location i,j is lucky enough, spawn a cache!
-    if (luck([i, j].toString()) < CACHE_SPAWN_PROBABILITY) {
-      spawnCache(i, j);
-    }
-  }
-}
-
 // Functioning directional buttons
 document.getElementById("north")?.addEventListener(
   "click",
@@ -207,4 +127,146 @@ function movePlayer(deltaLng: number, deltaLat: number) {
 
   // Center map on the new player location
   map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
+}
+
+interface Momento<T> {
+  toMemento(): T;
+  fromMemento(memento: T): void;
+}
+
+class Geocache implements Momento<string> {
+  i: number;
+  j: number;
+  numCoins: number;
+
+  constructor(i: number, j: number) {
+    this.i = i;
+    this.j = j;
+    this.numCoins = Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
+  }
+
+  toMemento(): string {
+    return JSON.stringify({ i: this.i, j: this.j, numCoins: this.numCoins });
+  }
+
+  fromMemento(memento: string): void {
+    const state = JSON.parse(memento);
+    this.i = state.i;
+    this.j = state.j;
+    this.numCoins = state.numCoins;
+  }
+}
+
+const cacheMementoMap: Map<string, string> = new Map();
+
+// Add caches to the map by cell numbers
+function spawnCache(i: number, j: number) {
+  // Convert cell numbers into lat/lng bounds
+  const origin = OAKES_CLASSROOM;
+  const bounds = leaflet.latLngBounds([
+    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
+    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
+  ]);
+
+  // Add a rectangle to the map to represent the cache
+  const rect = leaflet.rectangle(bounds, {
+    className: "cool-cache-box",
+  });
+  rect.addTo(map);
+
+  // Function to update the player's coins on the status panel (used in popupDiv)
+  function updateStatusPanel() {
+    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
+  }
+
+  // Check if the cache state is stored (memento)
+  const memento = cacheMementoMap.get(`${i}:${j}`);
+  let cacheCoins = memento
+    ? JSON.parse(memento).numCoins
+    : Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
+
+  // Handle interactions with the cache
+  rect.bindPopup(() => {
+    // Each cache has a random point value, mutable by the player
+    const cacheSerials: { i: number; j: number; serial: number }[] = [];
+    for (let k = 0; k < cacheCoins; k++) {
+      cacheSerials.push({ i, j, serial: cacheSerial++ });
+    }
+
+    // The popup offers a description and button
+    const popupDiv = document.createElement("div");
+    popupDiv.innerHTML = `
+      <div>Cache at "${i},${j}" - Coins: <span id="cacheCoins">${cacheCoins}</span></div>
+      <button id="collect" class="button-collect">Collect</button>
+      <button id="deposit" class="button-deposit" ${
+      playerCoins > 0 ? "" : "disabled"
+    }>Deposit</button>`;
+
+    // Clicking the button decrements the cache's value and increments the player's points
+    popupDiv
+      .querySelector<HTMLButtonElement>("#collect")!
+      .addEventListener("click", () => {
+        if (cacheCoins > 0) {
+          cacheCoins--;
+          playerCoins++;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          // Update cache state and memento
+          cacheMementoMap.set(
+            `${i}:${j}`,
+            JSON.stringify({ i, j, numCoins: cacheCoins }),
+          );
+          updateStatusPanel();
+        }
+      });
+
+    popupDiv
+      .querySelector<HTMLButtonElement>("#deposit")!
+      .addEventListener("click", () => {
+        if (playerCoins > 0) {
+          cacheCoins++;
+          playerCoins--;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          // Update cache state and memento
+          cacheMementoMap.set(
+            `${i}:${j}`,
+            JSON.stringify({ i, j, numCoins: cacheCoins }),
+          );
+          updateStatusPanel();
+          popupDiv.querySelector<HTMLButtonElement>("#deposit")!.disabled =
+            playerCoins === 0;
+        }
+      });
+
+    return popupDiv;
+  });
+
+  // Save the initial cache state to the memento map if it's a new cache
+  if (!memento) {
+    cacheMementoMap.set(
+      `${i}:${j}`,
+      JSON.stringify({ i, j, numCoins: cacheCoins }),
+    );
+  }
+}
+
+// Look around the player's neighborhood for caches to spawn
+for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
+  for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
+    // If location i,j is lucky enough, spawn a cache!
+    if (luck([i, j].toString()) < CACHE_SPAWN_PROBABILITY) {
+      spawnCache(i, j);
+    }
+  }
+}
+
+function _restoreCacheState(i: number, j: number): Geocache | null {
+  const memento = cacheMementoMap.get(`${i}:${j}`);
+  if (memento) {
+    const cache = new Geocache(i, j);
+    cache.fromMemento(memento);
+    return cache;
+  }
+  return null; // Cache doesn't exist or hasn't been spawned yet
 }
