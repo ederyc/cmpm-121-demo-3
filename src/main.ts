@@ -336,3 +336,44 @@ function loadGameState() {
     map.setView(lastPosition, GAMEPLAY_ZOOM_LEVEL);
   }
 }
+
+function resetGameState() {
+  // Clear localStorage
+  localStorage.clear();
+
+  // Reset player data
+  playerCoins = 0;
+  statusPanel.innerHTML = "No coins 😔";
+  playerPath.length = 0;
+  playerPolyline.setLatLngs(playerPath);
+
+  // Reset the player to the starting position
+  playerMarker.setLatLng(OAKES_CLASSROOM);
+  map.setView(OAKES_CLASSROOM, GAMEPLAY_ZOOM_LEVEL);
+
+  // Clear all cache data and respawn initial caches
+  cacheMementoMap.clear();
+  map.eachLayer((layer) => {
+    if (layer instanceof leaflet.Rectangle) {
+      map.removeLayer(layer);
+    }
+  });
+
+  // Respawn caches based on initial spawn logic
+  for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
+    for (let j = -NEIGHBORHOOD_SIZE; j < NEIGHBORHOOD_SIZE; j++) {
+      if (luck([i, j].toString()) < CACHE_SPAWN_PROBABILITY) {
+        spawnCache(i, j);
+      }
+    }
+  }
+}
+
+document.getElementById("reset")?.addEventListener("click", () => {
+  const confirmReset = confirm(
+    "Are you sure you want to reset the game? This will erase all progress and cannot be undone.",
+  );
+  if (confirmReset) {
+    resetGameState();
+  }
+});
