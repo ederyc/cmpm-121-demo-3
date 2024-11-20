@@ -57,6 +57,23 @@ document.body.appendChild(title);
 // Location of the classroom
 const OAKES_CLASSROOM = leaflet.latLng(36.98949379578401, -122.06277128548504);
 
+// Player Position
+let playerPosition = { lat: OAKES_CLASSROOM.lat, lng: OAKES_CLASSROOM.lng };
+
+navigator.geolocation.getCurrentPosition((position) => {
+  playerPosition = {
+    lat: position.coords.latitude,
+    lng: position.coords.longitude,
+  };
+
+  // Re-spawn caches around the updated position
+  for (let i = -2; i <= 2; i++) {
+    for (let j = -2; j <= 2; j++) {
+      spawnCache(i, j);
+    }
+  }
+});
+
 // Tunable gameplay parameters
 const GAMEPLAY_ZOOM_LEVEL = 19;
 const TILE_DEGREES = 1e-4;
@@ -173,7 +190,7 @@ const cacheMementoMap: Map<string, string> = new Map();
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
-  const origin = OAKES_CLASSROOM;
+  const origin = playerPosition;
   const bounds = leaflet.latLngBounds([
     [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
     [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
@@ -375,5 +392,63 @@ document.getElementById("reset")?.addEventListener("click", () => {
   );
   if (confirmReset) {
     resetGameState();
+  }
+});
+
+let isTrackingLocation = false; // Tracks if geolocation is enabled
+let watchId: number | null = null; // Stores the geolocation watch ID
+
+function startGeolocationTracking() {
+  if (!navigator.geolocation) {
+    alert("Geolocation is not supported by your browser.");
+    return;
+  }
+
+  isTrackingLocation = true;
+
+  // Watch the position and update the map when the player moves
+  watchId = navigator.geolocation.watchPosition(
+    (position) => {
+      const { latitude, longitude } = position.coords;
+      const newLatLng = leaflet.latLng(latitude, longitude);
+
+      // Update player position and map view
+      playerMarker.setLatLng(newLatLng);
+      map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
+
+      // Add the new position to the player's path
+      playerPath.push(newLatLng);
+      playerPolyline.setLatLngs(playerPath);
+
+      // Trigger events for UI updates or additional logic
+      document.dispatchEvent(
+        new CustomEvent("player-moved", { detail: { position: newLatLng } }),
+      );
+
+      // Spawn caches near the player's new location
+      spawnCache(latitude, longitude); // Adjust this call as needed based on your spawnCache implementation
+    },
+    (error) => {
+      console.error("Geolocation error:", error);
+      alert("Unable to retrieve your location. Please check your settings.");
+    },
+    { enableHighAccuracy: true }, // Use high accuracy for better results
+  );
+}
+
+function stopGeolocationTracking() {
+  if (watchId !== null) {
+    navigator.geolocation.clearWatch(watchId);
+    watchId = null;
+  }
+  isTrackingLocation = false;
+  alert("Geolocation tracking stopped.");
+}
+
+document.getElementById("sensor")?.addEventListener("click", () => {
+  if (isTrackingLocation) {
+    stopGeolocationTracking();
+  } else {
+    startGeolocationTracking();
   }
 });
