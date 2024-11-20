@@ -83,6 +83,10 @@ leaflet
   })
   .addTo(map);
 
+document.addEventListener("DOMContentLoaded", () => {
+  loadGameState(); // Restore saved data
+});
+
 // Add a marker to represent the player
 const playerMarker = leaflet.marker(OAKES_CLASSROOM);
 playerMarker.bindTooltip("This is You!!");
@@ -127,6 +131,13 @@ function movePlayer(deltaLng: number, deltaLat: number) {
 
   // Center map on the new player location
   map.setView(newLatLng, GAMEPLAY_ZOOM_LEVEL);
+
+  // Add to the movement path
+  playerPath.push(newLatLng);
+  playerPolyline.setLatLngs(playerPath);
+
+  saveGameState();
+  updatePlayerPath(newLatLng);
 }
 
 interface Momento<T> {
@@ -217,6 +228,7 @@ function spawnCache(i: number, j: number) {
             JSON.stringify({ i, j, numCoins: cacheCoins }),
           );
           updateStatusPanel();
+          saveGameState();
         }
       });
 
@@ -234,6 +246,7 @@ function spawnCache(i: number, j: number) {
             JSON.stringify({ i, j, numCoins: cacheCoins }),
           );
           updateStatusPanel();
+          saveGameState();
           popupDiv.querySelector<HTMLButtonElement>("#deposit")!.disabled =
             playerCoins === 0;
         }
@@ -269,4 +282,57 @@ function _restoreCacheState(i: number, j: number): Geocache | null {
     return cache;
   }
   return null; // Cache doesn't exist or hasn't been spawned yet
+}
+
+function saveGameState() {
+  const gameState = {
+    playerCoins,
+    cacheStates: Array.from(cacheMementoMap.entries()),
+    playerPath: playerPath.map((latLng) => ({
+      lat: latLng.lat,
+      lng: latLng.lng,
+    })),
+  };
+  localStorage.setItem("gameState", JSON.stringify(gameState));
+}
+
+const playerPath: leaflet.LatLng[] = [];
+const playerPolyline = leaflet.polyline([], { color: "blue" }).addTo(map);
+
+function updatePlayerPath(newLatLng: leaflet.LatLng) {
+  playerPath.push(newLatLng);
+  playerPolyline.setLatLngs(playerPath);
+}
+
+function loadGameState() {
+  const gameState = JSON.parse(localStorage.getItem("gameState") || "{}");
+
+  if (gameState.playerCoins !== undefined) {
+    playerCoins = gameState.playerCoins;
+    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
+  }
+
+  if (gameState.cacheStates) {
+    gameState.cacheStates.forEach(([key, value]: [string, string]) => {
+      cacheMementoMap.set(key, value);
+      const { i, j } = JSON.parse(value);
+      spawnCache(i, j); // Respawn caches from saved state
+    });
+  }
+
+  if (gameState.playerPath && gameState.playerPath.length > 0) {
+    // Restore the movement history
+    gameState.playerPath.forEach(
+      ({ lat, lng }: { lat: number; lng: number }) => {
+        const point = leaflet.latLng(lat, lng);
+        playerPath.push(point);
+      },
+    );
+    playerPolyline.setLatLngs(playerPath);
+
+    // Set the player's position to the last point in the path
+    const lastPosition = playerPath[playerPath.length - 1];
+    playerMarker.setLatLng(lastPosition);
+    map.setView(lastPosition, GAMEPLAY_ZOOM_LEVEL);
+  }
 }
