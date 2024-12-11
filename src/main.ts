@@ -115,7 +115,7 @@ const statusPanel = document.querySelector<HTMLDivElement>("#statusPanel")!;
 statusPanel.innerHTML = "No coins 😔";
 
 // assign serial numbers to coins
-let cacheSerial = 0;
+const cacheSerial = 0;
 
 // Functioning directional buttons
 document.getElementById("north")?.addEventListener(
@@ -187,6 +187,114 @@ class Geocache implements Momento<string> {
 
 const cacheMementoMap: Map<string, string> = new Map();
 
+function createBounds(
+  i: number,
+  j: number,
+  origin: { lat: number; lng: number },
+): leaflet.LatLngBounds {
+  return leaflet.latLngBounds([
+    [origin.lat + i * TILE_DEGREES, origin.lng + j * TILE_DEGREES],
+    [origin.lat + (i + 1) * TILE_DEGREES, origin.lng + (j + 1) * TILE_DEGREES],
+  ]);
+}
+
+function createCacheRectangle(bounds: leaflet.LatLngBounds): leaflet.Rectangle {
+  const rect = leaflet.rectangle(bounds, {
+    className: "cool-cache-box",
+  });
+  rect.addTo(map);
+  return rect;
+}
+
+function setupCachePopup(
+  rect: leaflet.Rectangle,
+  cacheCoins: number,
+  playerCoins: number,
+  i: number,
+  j: number,
+  cacheSerial: number,
+): void {
+  function updateStatusPanel() {
+    statusPanel.innerHTML = `Player Coins: ${playerCoins}`;
+  }
+
+  rect.bindPopup(() => {
+    const cacheSerials: { i: number; j: number; serial: number }[] = [];
+    for (let k = 0; k < cacheCoins; k++) {
+      cacheSerials.push({ i, j, serial: cacheSerial++ });
+    }
+
+    const popupDiv = document.createElement("div");
+    popupDiv.innerHTML = `
+      <div>Cache at "${i},${j}" - Coins: <span id="cacheCoins">${cacheCoins}</span></div>
+      <button id="collect" class="button-collect">Collect</button>
+      <button id="deposit" class="button-deposit" ${
+      playerCoins > 0 ? "" : "disabled"
+    }>Deposit</button>`;
+
+    popupDiv
+      .querySelector<HTMLButtonElement>("#collect")!
+      .addEventListener("click", () => {
+        if (cacheCoins > 0) {
+          cacheCoins--;
+          playerCoins++;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          cacheMementoMap.set(
+            `${i}:${j}`,
+            JSON.stringify({ i, j, numCoins: cacheCoins }),
+          );
+          updateStatusPanel();
+          saveGameState();
+        }
+      });
+
+    popupDiv
+      .querySelector<HTMLButtonElement>("#deposit")!
+      .addEventListener("click", () => {
+        if (playerCoins > 0) {
+          cacheCoins++;
+          playerCoins--;
+          popupDiv.querySelector<HTMLSpanElement>("#cacheCoins")!.textContent =
+            cacheCoins.toString();
+          cacheMementoMap.set(
+            `${i}:${j}`,
+            JSON.stringify({ i, j, numCoins: cacheCoins }),
+          );
+          updateStatusPanel();
+          saveGameState();
+          popupDiv.querySelector<HTMLButtonElement>("#deposit")!.disabled =
+            playerCoins === 0;
+        }
+      });
+
+    return popupDiv;
+  });
+}
+
+// Refactored spawnCache function
+function spawnCache(i: number, j: number) {
+  const origin = playerPosition;
+  const bounds = createBounds(i, j, origin);
+
+  const rect = createCacheRectangle(bounds);
+
+  const memento = cacheMementoMap.get(`${i}:${j}`);
+  const cacheCoins = memento
+    ? JSON.parse(memento).numCoins
+    : Math.floor(luck([i, j, "initialCoins"].toString()) * 50);
+
+  setupCachePopup(rect, cacheCoins, playerCoins, i, j, cacheSerial);
+
+  if (!memento) {
+    cacheMementoMap.set(
+      `${i}:${j}`,
+      JSON.stringify({ i, j, numCoins: cacheCoins }),
+    );
+  }
+}
+
+/*
 // Add caches to the map by cell numbers
 function spawnCache(i: number, j: number) {
   // Convert cell numbers into lat/lng bounds
@@ -279,7 +387,7 @@ function spawnCache(i: number, j: number) {
       JSON.stringify({ i, j, numCoins: cacheCoins }),
     );
   }
-}
+}*/
 
 // Look around the player's neighborhood for caches to spawn
 for (let i = -NEIGHBORHOOD_SIZE; i < NEIGHBORHOOD_SIZE; i++) {
